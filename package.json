@@ -1,0 +1,12 @@
+{
+  "name": "careerpilot_ai",
+  "version": "1.0.0",
+  "description": "\"This is the Project Career Pilot AI \"",
+  "license": "ISC",
+  "author": "Saurabh",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
