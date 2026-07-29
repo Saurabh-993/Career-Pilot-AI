@@ -45,7 +45,11 @@ export async function generateQuiz(resumeId) {
   const previous = await Quiz.find({ resumeId }).select("questions.q");
   const avoid = previous.flatMap((quiz) => quiz.questions.map((x) => x.q));
 
-  const { questions } = await getProvider().json(quizPrompt(resume.parsed, avoid), QuizSchema);
+  // temperature 0.9: maximize variety so every attempt gets a truly
+  // different set (combined with the explicit avoid-list in the prompt).
+  const { questions } = await getProvider().json(quizPrompt(resume.parsed, avoid), QuizSchema, {
+    temperature: 0.9,
+  });
   const quiz = await Quiz.create({ resumeId, questions });
   return { quiz, attempt: attempts + 1, attemptsLeft: MAX_ATTEMPTS - attempts - 1 };
 }

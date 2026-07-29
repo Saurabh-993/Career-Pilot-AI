@@ -16,6 +16,7 @@ export const HealthSchema = z.object({
 // .default() / .nullable() make the schema forgiving where models often
 // omit fields — strict on structure, lenient on optioanl details.
 export const ResumeParsedSchema = z.object({
+  name: z.string().default(""), // candidate's name — used for the greeting
   summary: z.string().describe("2-3 sentence professional summary"),
   skills: z.array(z.string()).default([]),
   projects: z

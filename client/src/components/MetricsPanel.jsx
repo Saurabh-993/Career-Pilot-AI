@@ -1,6 +1,5 @@
-// AI career dashboard — consumes the SSE stream and renders the metrics.
-// EventSource = the browser side of SSE: one long-lived connection where the
-// server pushes named events ("progress", "done", "error") as they happen.
+// Career metrics as bento grid cells (rendered inside Dashboard's grid).
+// Consumes the SSE stream: server pushes progress → done | error.
 import { useEffect, useRef, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useAppStore } from "../store/useAppStore.js";
@@ -19,118 +18,114 @@ export default function MetricsPanel() {
     esRef.current?.close();
     setPhase("streaming");
     setError(null);
-    const es = new EventSource(
-      `/api/analysis/dashboard/${resumeId}/stream${refresh ? "?refresh=1" : ""}`
-    );
+    const es = new EventSource(`/api/analysis/dashboard/${resumeId}/stream${refresh ? "?refresh=1" : ""}`);
     esRef.current = es;
     es.addEventListener("progress", (e) => setStage(JSON.parse(e.data).stage));
-    es.addEventListener("done", (e) => {
-      setDash(JSON.parse(e.data));
-      setPhase("done");
-      es.close();
-    });
+    es.addEventListener("done", (e) => { setDash(JSON.parse(e.data)); setPhase("done"); es.close(); });
     es.addEventListener("error", (e) => {
-      // our named "error" event carries JSON; connection-level errors don't
-      if (e.data) setError(JSON.parse(e.data).message);
-      else setError("Connection lost — is the server running?");
+      setError(e.data ? JSON.parse(e.data).message : "Connection lost — is the server running?");
       setPhase("error");
       es.close();
     });
   }
 
-  // Auto-generate as soon as an analyzed resume is available.
   useEffect(() => {
     if (resumeId && resumeReady) start();
-    return () => esRef.current?.close(); // cleanup on unmount
+    return () => esRef.current?.close();
   }, [resumeId, resumeReady]);
 
   if (!resumeId || !resumeReady) return null;
 
   if (phase === "streaming")
     return (
-      <div className="rounded-xl border border-line bg-surface p-5">
-        <p className="text-sm text-accent animate-pulse">{stage || "Starting analysis…"}</p>
+      <div className="bento order-2 col-span-full !py-4">
+        <p className="animate-pulse text-sm text-accent">{stage || "Starting analysis…"}</p>
       </div>
     );
 
   if (phase === "error")
     return (
-      <div className="rounded-xl border border-line bg-surface p-5">
-        <p className="text-sm text-red-400 mb-2">{error}</p>
-        <button onClick={() => start()} className="text-xs text-accent hover:underline">
-          Try again
-        </button>
+      <div className="bento order-2 col-span-full !py-4">
+        <p className="text-sm text-red-400">{error}</p>
+        <button onClick={() => start()} className="mt-1 text-xs font-medium text-accent hover:underline">Try again</button>
       </div>
     );
 
   if (phase !== "done" || !dash) return null;
 
   const score = Math.round(dash.atsScore);
-  const ring = 2 * Math.PI * 44; // circumference for the score ring
+  const ring = 2 * Math.PI * 46;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Career insights</h3>
-        <button onClick={() => start(true)} className="text-xs text-accent hover:underline">
-          ↻ Regenerate
-        </button>
-      </div>
-
-      {/* ATS score ring + tips */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-line bg-surface p-5 flex items-center gap-5">
-          <svg width="104" height="104" viewBox="0 0 104 104" className="-rotate-90 shrink-0">
-            <circle cx="52" cy="52" r="44" fill="none" strokeWidth="8" className="stroke-line" />
-            <circle
-              cx="52" cy="52" r="44" fill="none" strokeWidth="8" strokeLinecap="round"
-              className="stroke-accent transition-all duration-700"
-              strokeDasharray={ring} strokeDashoffset={ring * (1 - score / 100)}
-            />
-          </svg>
-          <div>
-            <p className="text-3xl font-bold">{score}<span className="text-base text-soft">/100</span></p>
-            <p className="text-sm text-soft">ATS readiness score</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface p-5">
-          <p className="text-sm font-medium mb-2">Improve your ATS score</p>
-          <ul className="space-y-1.5">
-            {dash.atsTips.map((t, i) => (
-              <li key={i} className="text-xs text-soft leading-relaxed">• {t}</li>
-            ))}
-          </ul>
+    <>
+      {/* ATS score — top-right, first thing the user sees */}
+      <div className="bento bento-hover order-2 md:col-span-3 xl:col-span-5 flex items-center gap-6">
+        <svg width="116" height="116" viewBox="0 0 116 116" className="-rotate-90 shrink-0">
+          <circle cx="58" cy="58" r="46" fill="none" strokeWidth="9" className="stroke-line" />
+          <circle
+            cx="58" cy="58" r="46" fill="none" strokeWidth="9" strokeLinecap="round"
+            className="stroke-accent transition-all duration-700"
+            strokeDasharray={ring} strokeDashoffset={ring * (1 - score / 100)}
+          />
+        </svg>
+        <div>
+          <p className="text-4xl font-extrabold tracking-tight">
+            {score}<span className="text-base font-medium text-soft">/100</span>
+          </p>
+          <p className="mt-0.5 text-xs font-medium text-soft">ATS readiness</p>
+          <button onClick={() => start(true)} className="mt-2 text-[11px] font-medium text-accent hover:underline">
+            ↻ Regenerate insights
+          </button>
         </div>
       </div>
 
-      {/* Strengths & gaps */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {[
-          ["Strengths", dash.strengths, "text-emerald-400"],
-          ["Gaps to close", dash.gaps, "text-amber-400"],
-        ].map(([title, items, color]) => (
-          <div key={title} className="rounded-xl border border-line bg-surface p-5">
-            <p className={`text-sm font-medium mb-3 ${color}`}>{title}</p>
-            <ul className="space-y-2.5">
-              {items.map((it, i) => (
-                <li key={i} className="text-xs">
-                  <span className="font-medium">{it.title}</span>
-                  <span className="text-soft"> — {it.detail}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      {/* Strengths */}
+      <div className="bento bento-hover order-5 md:col-span-3 xl:col-span-4">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emerald-500">Strengths</p>
+        <ul className="space-y-3">
+          {dash.strengths.map((it, i) => (
+            <li key={i} className="text-sm leading-relaxed">
+              <span className="font-semibold">{it.title}</span>
+              <span className="text-soft"> — {it.detail}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* In-demand tech (Recharts) */}
-      <div className="rounded-xl border border-line bg-surface p-5">
-        <p className="text-sm font-medium mb-1">Technology in demand</p>
-        <p className="text-xs text-soft mb-4">
-          <span className="text-accent">■</span> you have it&nbsp;&nbsp;
-          <span className="text-soft">■</span> worth learning
-        </p>
-        <div style={{ height: 260 }}>
+      {/* Gaps */}
+      <div className="bento bento-hover order-6 md:col-span-3 xl:col-span-4">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-amber-500">Gaps to close</p>
+        <ul className="space-y-3">
+          {dash.gaps.map((it, i) => (
+            <li key={i} className="text-sm leading-relaxed">
+              <span className="font-semibold">{it.title}</span>
+              <span className="text-soft"> — {it.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ATS improvement tips */}
+      <div className="bento bento-hover order-7 md:col-span-3 xl:col-span-4">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-accent">Boost your ATS score</p>
+        <ul className="space-y-2.5">
+          {dash.atsTips.map((t, i) => (
+            <li key={i} className="flex gap-2 text-sm leading-relaxed text-soft">
+              <span className="font-bold text-accent">{i + 1}.</span> {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Tech demand chart */}
+      <div className="bento bento-hover order-8 md:col-span-6 xl:col-span-8">
+        <div className="mb-3 flex items-baseline justify-between">
+          <p className="text-xs font-bold uppercase tracking-wider">Technology in demand</p>
+          <p className="text-[10px] text-soft">
+            <span className="text-accent">●</span> you have it&nbsp;&nbsp;<span>●</span> worth learning
+          </p>
+        </div>
+        <div style={{ height: 250 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={dash.inDemandTech} layout="vertical" margin={{ left: 8, right: 16 }}>
               <XAxis type="number" domain={[0, 100]} hide />
@@ -142,13 +137,13 @@ export default function MetricsPanel() {
               <Tooltip
                 cursor={{ fill: "rgb(var(--line) / 0.3)" }}
                 contentStyle={{
-                  background: "rgb(var(--ink))", border: "1px solid rgb(var(--line))",
-                  borderRadius: 8, fontSize: 12, color: "rgb(var(--strong))",
+                  background: "rgb(var(--surface))", border: "1px solid rgb(var(--line))",
+                  borderRadius: 12, fontSize: 12, color: "rgb(var(--strong))",
                 }}
               />
-              <Bar dataKey="demand" radius={[0, 4, 4, 0]} barSize={14}>
+              <Bar dataKey="demand" radius={[0, 6, 6, 0]} barSize={13}>
                 {dash.inDemandTech.map((t, i) => (
-                  <Cell key={i} fill={t.hasSkill ? "rgb(var(--accent))" : "rgb(var(--soft) / 0.45)"} />
+                  <Cell key={i} fill={t.hasSkill ? "rgb(var(--accent))" : "rgb(var(--soft) / 0.35)"} />
                 ))}
               </Bar>
             </BarChart>
@@ -157,26 +152,22 @@ export default function MetricsPanel() {
       </div>
 
       {/* Role fit */}
-      <div className="rounded-xl border border-line bg-surface p-5">
-        <p className="text-sm font-medium mb-3">Role fit</p>
-        <div className="space-y-3">
+      <div className="bento bento-hover order-9 md:col-span-6 xl:col-span-4">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider">Role fit</p>
+        <div className="space-y-4">
           {dash.roleFit.map((r) => (
             <div key={r.role}>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="font-medium">{r.role}</span>
+              <div className="mb-1 flex justify-between text-sm">
+                <span className="font-semibold">{r.role}</span>
                 <span className="text-soft">{Math.round(r.matchPercent)}%</span>
               </div>
-              <div className="h-1.5 rounded-full bg-line overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-accent transition-all duration-700"
-                  style={{ width: `${r.matchPercent}%` }}
-                />
+              <div className="h-1.5 overflow-hidden rounded-full bg-line">
+                <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${r.matchPercent}%` }} />
               </div>
-              <p className="text-xs text-soft mt-1">{r.reason}</p>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -29,6 +29,7 @@ function extractionPrompt(rawText) {
   return `Extract structured data from this resume.
 
 Return a JSON object with EXACTLY these keys:
+- "name": the candidate's full name as written on the resume
 - "summary": 2-3 sentence professional summary of the candidate
 - "skills": array of individual technical skills (flatten grouped lists; e.g. "React, Node" → ["React", "Node"])
 - "projects": array of {"name", "description", "technologies": []}

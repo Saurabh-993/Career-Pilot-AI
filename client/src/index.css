@@ -1,37 +1,62 @@
-/* These three directives are replaced by Tailwind's generated CSS at build time */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* THEME SYSTEM — colors live in CSS variables (as "R G B" triplets so Tailwind
-   can add opacity). Tailwind tokens (bg-ink, text-soft…) point at these vars,
-   so toggling .light on <html> re-themes the ENTIRE app instantly — no
-   component ever needs a dark:/light: class. */
+/* THEME SYSTEM — two DISTINCT personalities:
+   Dark  = deep violet/purple night (analytics-lab feel).
+   Light = clean gallery white with professional teal.  */
 :root {
-  --ink: 11 18 32;        /* darkest background */
-  --surface: 17 26 46;    /* cards / panels */
-  --line: 34 48 77;       /* borders */
-  --accent: 56 189 248;   /* primary accent */
-  --soft: 148 163 184;    /* secondary text */
-  --strong: 241 245 249;  /* primary text */
+  --ink: 13 11 25;         /* deep purple-black */
+  --surface: 23 20 41;     /* violet-tinted cards */
+  --line: 45 40 72;
+  --accent: 167 139 250;   /* violet-400 */
+  --accent-2: 96 165 250;  /* blue-400 — secondary accent */
+  --soft: 150 146 178;
+  --strong: 236 233 247;
+  --gridline: 190 180 255;
 }
 
 html.light {
-  --ink: 244 246 250;
+  --ink: 241 243 244;
   --surface: 255 255 255;
-  --line: 203 213 225;
-  --accent: 2 132 199;
-  --soft: 71 85 105;
-  --strong: 15 23 42;
+  --line: 224 228 231;
+  --accent: 13 148 136;    /* teal-600 */
+  --accent-2: 2 132 199;   /* sky-700 — secondary accent */
+  --soft: 96 106 118;
+  --strong: 16 20 24;
+  --gridline: 15 60 66;
 }
 
-/* Plain CSS instead of @apply here — @apply with custom classes depends on
-   the Tailwind config being loaded at that exact moment, which makes it the
-   most fragile line in the file. Using the variables directly can never break. */
 body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   background-color: rgb(var(--ink));
   color: rgb(var(--strong));
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-image:
+    linear-gradient(rgb(var(--gridline) / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--gridline) / 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
 }
 
+/* Bento card — the shared building block */
+.bento {
+  border-radius: 1.25rem;
+  border: 1px solid rgb(var(--line));
+  background-color: rgb(var(--surface));
+  padding: 1.375rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.bento-hover:hover {
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.09);
+  transform: translateY(-2px);
+}
+
+/* Blinking status dot */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.dot-live { animation: blink 2s ease-in-out infinite; }

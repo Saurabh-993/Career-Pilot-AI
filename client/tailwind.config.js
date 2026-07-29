@@ -4,6 +4,9 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
       colors: {
         // Tokens point at CSS variables (see index.css) → light/dark theming
         // works app-wide by toggling one class on <html>.
@@ -12,6 +15,7 @@ export default {
         surface: "rgb(var(--surface) / <alpha-value>)",
         line: "rgb(var(--line) / <alpha-value>)",
         accent: "rgb(var(--accent) / <alpha-value>)",
+        accent2: "rgb(var(--accent-2) / <alpha-value>)",
         soft: "rgb(var(--soft) / <alpha-value>)",
         strong: "rgb(var(--strong) / <alpha-value>)",
       },

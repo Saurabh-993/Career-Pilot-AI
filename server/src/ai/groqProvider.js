@@ -67,7 +67,9 @@ export class GroqProvider {
             ? [{ role: "user", content: `Your previous JSON was invalid: ${lastError}. Return corrected JSON only.` }]
             : []),
         ],
-        { ...opts, jsonMode: true, temperature: 0.2 } // low temperature = more deterministic
+        // Low temperature = deterministic (good for extraction). Callers can
+        // raise it when VARIETY matters (e.g. fresh quiz questions per attempt).
+        { ...opts, jsonMode: true, temperature: opts.temperature ?? 0.2 }
       );
       try {
         return schema.parse(JSON.parse(raw)); // JSON.parse → syntax; schema.parse → shape
