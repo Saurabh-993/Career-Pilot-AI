@@ -1,0 +1,8 @@
+/* These three directives are replaced by Tailwind's generated CSS at build time */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-ink text-slate-100 antialiased;
+}

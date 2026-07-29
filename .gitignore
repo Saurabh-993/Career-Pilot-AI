@@ -1,0 +1,33 @@
+# ---------- dependencies & builds ----------
+node_modules/
+dist/
+build/
+
+# ---------- secrets & environment ----------
+# .env holds real API keys — NEVER commit it. .env.example (no secrets) stays tracked.
+.env
+.env.*
+!.env.example
+
+# ---------- internal workflow docs (personal / AI-session files) ----------
+# Kept local: PROJECT_GUIDE.md and README.md stay public (good portfolio material).
+PLAN.md
+CLAUDE.md
+MENTOR_PROTOCOL.md
+PROJECT_CONTEXT.md
+
+# ---------- AI bridge runtime (regenerated per task, may contain resume data) ----------
+bridge/context.md
+bridge/inbox/
+bridge/outbox/
+
+# ---------- user data ----------
+uploads/
+data/
+
+# ---------- logs / OS / editor ----------
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
