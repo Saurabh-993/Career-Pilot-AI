@@ -25,6 +25,13 @@ html.light {
   --strong: 15 23 42;
 }
 
+/* Plain CSS instead of @apply here — @apply with custom classes depends on
+   the Tailwind config being loaded at that exact moment, which makes it the
+   most fragile line in the file. Using the variables directly can never break. */
 body {
-  @apply bg-ink text-strong antialiased;
+  background-color: rgb(var(--ink));
+  color: rgb(var(--strong));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+

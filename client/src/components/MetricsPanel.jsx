@@ -135,8 +135,8 @@ export default function MetricsPanel() {
             <BarChart data={dash.inDemandTech} layout="vertical" margin={{ left: 8, right: 16 }}>
               <XAxis type="number" domain={[0, 100]} hide />
               <YAxis
-                type="category" dataKey="name" width={110}
-                tick={{ fill: "rgb(var(--soft))", fontSize: 11 }}
+                type="category" dataKey="name" width={150}
+                tick={{ fill: "rgb(var(--soft))", fontSize: 10 }}
                 axisLine={false} tickLine={false}
               />
               <Tooltip

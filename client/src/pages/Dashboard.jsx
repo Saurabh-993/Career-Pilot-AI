@@ -9,11 +9,21 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Thanks to the Vite proxy, "/api/health" reaches the Express server.
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then(setHealth)
-      .catch((e) => setError(e.message));
+    // Re-check every 5s — a one-shot check can catch the server mid-restart
+    // (node --watch restarts on every save) and then show "unreachable" forever.
+    async function check() {
+      try {
+        const r = await fetch("/api/health");
+        setHealth(await r.json());
+        setError(null);
+      } catch (e) {
+        setHealth(null);
+        setError(e.message);
+      }
+    }
+    check();
+    const timer = setInterval(check, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
