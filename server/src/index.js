@@ -6,6 +6,9 @@ import express from "express";
 import cors from "cors";
 import { pinoHttp } from "pino-http";
 import { getProvider } from "./ai/provider.js";
+import { connectDb, isDbConnected } from "./db.js";
+import { resumeRouter } from "./routes/resume.js";
+import { analysisRouter } from "./routes/analysis.js";
 
 const app = express();
 
@@ -27,8 +30,13 @@ app.get("/api/health", (req, res) => {
     ok: true,
     uptimeSeconds: Math.round(process.uptime()),
     groqKeyConfigured: Boolean(process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.startsWith("paste_")),
+    mongoConnected: isDbConnected(),
   });
 });
+
+// Feature routes
+app.use("/api/resume", resumeRouter);
+app.use("/api/analysis", analysisRouter);
 
 // AI smoke test: one tiny Groq call to verify the provider layer end-to-end.
 app.get("/api/ai/test", async (req, res, next) => {
@@ -50,6 +58,15 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 3001;
+
+// Fail-soft boot (robustness rule): if MongoDB is down, the API still starts —
+// /api/health reports mongoConnected:false so the UI can tell the user,
+// instead of the whole backend refusing to boot.
+connectDb().catch((err) => {
+  console.error(`⚠️  MongoDB not connected: ${err.message}`);
+  console.error("   → run `npm run db:up` at the repo root (Docker Desktop must be running)");
+});
+
 app.listen(port, () => {
   console.log(`✅ CareerPilot API running at http://localhost:${port}`);
 });

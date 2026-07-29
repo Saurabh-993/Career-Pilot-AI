@@ -10,11 +10,15 @@ build/
 !.env.example
 
 # ---------- internal workflow docs (personal / AI-session files) ----------
-# Kept local: PROJECT_GUIDE.md and README.md stay public (good portfolio material).
+# Only README.md stays public.
 PLAN.md
 CLAUDE.md
 MENTOR_PROTOCOL.md
 PROJECT_CONTEXT.md
+PROJECT_GUIDE.md
+
+# ---------- embedding model cache (downloaded on first run) ----------
+.cache/
 
 # ---------- AI bridge runtime (regenerated per task, may contain resume data) ----------
 bridge/context.md

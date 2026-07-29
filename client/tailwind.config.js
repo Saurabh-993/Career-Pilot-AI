@@ -5,12 +5,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        // App palette — referenced as e.g. className="bg-surface text-accent"
-        ink: "#0b1220",       // darkest background (sidebar)
-        surface: "#111a2e",   // card / panel background
-        line: "#22304d",      // borders
-        accent: "#38bdf8",    // primary accent (sky)
-        soft: "#94a3b8",      // secondary text
+        // Tokens point at CSS variables (see index.css) → light/dark theming
+        // works app-wide by toggling one class on <html>.
+        // "<alpha-value>" lets Tailwind still do opacity like bg-ink/50.
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        line: "rgb(var(--line) / <alpha-value>)",
+        accent: "rgb(var(--accent) / <alpha-value>)",
+        soft: "rgb(var(--soft) / <alpha-value>)",
+        strong: "rgb(var(--strong) / <alpha-value>)",
       },
     },
   },

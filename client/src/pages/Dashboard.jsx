@@ -1,6 +1,8 @@
 // Phase 0 Dashboard: proves the client ↔ server connection works.
 // Phase 1 replaces this with real metrics (strengths, ATS, in-demand tech).
 import { useEffect, useState } from "react";
+import UploadCard from "../components/UploadCard.jsx";
+import MetricsPanel from "../components/MetricsPanel.jsx";
 
 export default function Dashboard() {
   const [health, setHealth] = useState(null); // null = loading
@@ -17,7 +19,15 @@ export default function Dashboard() {
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-1">Dashboard</h2>
-      <p className="text-soft text-sm mb-6">Resume upload and live metrics arrive in Phase 1.</p>
+      <p className="text-soft text-sm mb-6">Upload your resume to begin. Live metrics arrive in the next steps.</p>
+
+      <div className="mb-6">
+        <UploadCard />
+      </div>
+
+      <div className="mb-6 max-w-3xl">
+        <MetricsPanel />
+      </div>
 
       <div className="max-w-md rounded-xl border border-line bg-surface p-5">
         <h3 className="font-medium mb-3">System status</h3>
@@ -32,6 +42,14 @@ export default function Dashboard() {
                 <span className="text-emerald-400">● configured</span>
               ) : (
                 <span className="text-amber-400">● missing — add it to server/.env</span>
+              )}
+            </li>
+            <li>
+              MongoDB:{" "}
+              {health.mongoConnected ? (
+                <span className="text-emerald-400">● connected</span>
+              ) : (
+                <span className="text-amber-400">● not connected — run `npm run db:up`</span>
               )}
             </li>
             <li className="text-soft">Uptime: {health.uptimeSeconds}s</li>

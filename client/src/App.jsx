@@ -1,9 +1,11 @@
 // App shell: left sidebar (your "scrollmenu") + routed page content.
+import { useEffect } from "react";
 import { NavLink, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.jsx";
 import Companies from "./pages/Companies.jsx";
 import Practice from "./pages/Practice.jsx";
 import Settings from "./pages/Settings.jsx";
+import { useAppStore } from "./store/useAppStore.js";
 
 const navItems = [
   { to: "/", label: "Dashboard", end: true },
@@ -13,6 +15,14 @@ const navItems = [
 ];
 
 export default function App() {
+  const theme = useAppStore((s) => s.theme);
+  const toggleTheme = useAppStore((s) => s.toggleTheme);
+
+  // Apply the theme by toggling one class on <html> — CSS variables do the rest.
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", theme === "light");
+  }, [theme]);
+
   return (
     <div className="flex min-h-screen">
       {/* ---- Sidebar ---- */}
@@ -30,13 +40,20 @@ export default function App() {
             end={end}
             className={({ isActive }) =>
               `rounded-lg px-3 py-2 text-sm transition-colors ${
-                isActive ? "bg-surface text-accent font-medium" : "text-soft hover:bg-surface hover:text-slate-100"
+                isActive ? "bg-surface text-accent font-medium" : "text-soft hover:bg-surface hover:text-strong"
               }`
             }
           >
             {label}
           </NavLink>
         ))}
+
+        <button
+          onClick={toggleTheme}
+          className="mt-auto rounded-lg border border-line px-3 py-2 text-sm text-soft hover:text-strong hover:bg-surface transition-colors"
+        >
+          {theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode"}
+        </button>
       </aside>
 
       {/* ---- Page content ---- */}

@@ -84,6 +84,51 @@ CareerPilot AI works in four main stages:
 - Qdrant
 - PDF Parser
 
+## Project Structure
+
+```text
+CareerPilot_AI/
+├─ client/                      # React frontend (Vite + Tailwind)
+│  ├─ index.html                # single HTML page React mounts into
+│  ├─ vite.config.js            # dev server + /api proxy to backend
+│  ├─ tailwind.config.js        # design tokens (colors, theme)
+│  └─ src/
+│     ├─ main.jsx               # entry — mounts <App/> with router
+│     ├─ App.jsx                # sidebar shell + routes
+│     ├─ index.css              # Tailwind directives + global styles
+│     ├─ pages/                 # one file per sidebar page
+│     │  ├─ Dashboard.jsx       #   resume upload + metrics
+│     │  ├─ Companies.jsx       #   job matches (Phase 3)
+│     │  ├─ Practice.jsx        #   interview prep (Phase 4)
+│     │  └─ Settings.jsx        #   AI provider settings (Phase 5)
+│     └─ components/            # reusable UI pieces
+│        └─ UploadCard.jsx      #   drag-drop upload + analysis display
+│
+├─ server/                      # Node.js + Express API
+│  ├─ .env.example              # template for required secrets (copy to .env)
+│  └─ src/
+│     ├─ index.js               # app entry — middleware, routes, error handler
+│     ├─ db.js                  # MongoDB connection (fail-soft)
+│     ├─ models/                # mongoose document schemas
+│     │  └─ Resume.js
+│     ├─ routes/                # HTTP endpoints per feature
+│     │  └─ resume.js           #   upload + status polling
+│     ├─ pipelines/             # multi-step AI workflows
+│     │  └─ ingestResume.js     #   extract → chunk → embed → store
+│     ├─ ai/                    # AI provider layer
+│     │  ├─ provider.js         #   factory — single doorway to all AI
+│     │  ├─ groqProvider.js     #   Tier 1: free Groq (validated JSON output)
+│     │  └─ embeddings.js       #   local fastembed vectors (384-dim)
+│     └─ vector/
+│        └─ qdrant.js           # vector DB wrapper (store + similarity search)
+│
+├─ shared/                      # zod schemas used by BOTH client and server
+│  └─ src/index.js
+│
+├─ docker-compose.yml           # local MongoDB + Qdrant (docker compose up -d)
+└─ package.json                 # npm workspaces root — one install for all three
+```
+
 ## LangGraph Workflow
 
 ```text
