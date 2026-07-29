@@ -50,6 +50,65 @@ export const ResumeParsedSchema = z.object({
   links: z.array(z.string()).default([]),
 });
 
+// One job listing after normalization — EVERY source (API, scrape, pasted JD)
+// funnels into this exact shape (PLAN.md §6).
+export const NormalizedJobSchema = z.object({
+  role: z.string(),
+  company: z.string().default(""),
+  location: z.string().default(""),
+  remote: z.boolean().default(false),
+  seniority: z.string().default(""),
+  salary: z.string().nullable().default(null),
+  skills: z.array(z.string()).default([]),
+  applyUrl: z.string().default(""),
+  source: z.string().default("manual"),
+  postedAt: z.string().nullable().default(null),
+});
+
+// AI batch-extraction of skills from job descriptions that lack tags.
+export const JobSkillsExtractionSchema = z.object({
+  items: z.array(z.object({ idx: z.number().int(), skills: z.array(z.string()) })),
+});
+
+// AI parse of pasted JD text / scraped page (may contain several jobs).
+// skills.min(3) forces real extraction — an empty skills array made pasted
+// jobs show "—" instead of a match % (bug found by Saurabh).
+export const JobsFromTextSchema = z.object({
+  jobs: z
+    .array(NormalizedJobSchema.extend({ skills: z.array(z.string()).min(3) }))
+    .min(1)
+    .max(10),
+});
+
+// Resume tailoring for a specific job.
+export const TailorSchema = z.object({
+  tailoredSummary: z.string(),
+  keywordsToAdd: z.array(z.string()).default([]),
+  bulletImprovements: z
+    .array(z.object({ original: z.string(), improved: z.string(), why: z.string().default("") }))
+    .default([]),
+  tailoredResumeMd: z.string(), // full tailored resume as markdown
+});
+
+// Fastest-path learning roadmap (rendered with React Flow, roadmap.sh style).
+export const RoadmapSchema = z.object({
+  targetRole: z.string(),
+  summary: z.string().default(""),
+  totalEstHours: z.number().default(0),
+  steps: z
+    .array(
+      z.object({
+        title: z.string(),
+        kind: z.enum(["skill", "project", "practice", "milestone"]),
+        estHours: z.number(),
+        why: z.string().default(""),
+        resources: z.array(z.object({ title: z.string(), url: z.string().default("") })).default([]),
+      })
+    )
+    .min(4)
+    .max(12),
+});
+
 // Profiling quiz the AI must generate from a resume (PLAN.md §7 ProfilingQuiz).
 export const QuizSchema = z.object({
   questions: z
