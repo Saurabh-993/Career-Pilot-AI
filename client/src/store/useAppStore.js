@@ -9,9 +9,15 @@ export const useAppStore = create(
       theme: "dark", // "dark" | "light"
       resumeId: null, // the active resume — shared across pages
       resumeReady: false, // true once the AI ingestion pipeline finished
+      profiling: null, // { score, byTopic } once the quiz is finished
+      profilingSkipped: false, // user chose "I know my level"
 
       toggleTheme: () => set((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })),
-      setResume: (resumeId, ready = false) => set({ resumeId, resumeReady: ready }),
+      // New resume = new level to verify → reset profiling state too.
+      setResume: (resumeId, ready = false) =>
+        set({ resumeId, resumeReady: ready, profiling: null, profilingSkipped: false }),
+      setProfiling: (result) => set({ profiling: result }),
+      skipProfiling: () => set({ profilingSkipped: true }),
     }),
     { name: "careerpilot" } // localStorage key
   )

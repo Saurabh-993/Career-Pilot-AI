@@ -49,6 +49,23 @@ export const ResumeParsedSchema = z.object({
   links: z.array(z.string()).default([]),
 });
 
+// Profiling quiz the AI must generate from a resume (PLAN.md §7 ProfilingQuiz).
+export const QuizSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        q: z.string(), // may contain a code snippet in markdown fences
+        options: z.array(z.string()).length(4),
+        answerIdx: z.number().int().min(0).max(3), // NEVER sent to the client
+        topic: z.string(), // e.g. "React", "SQL" — from the candidate's skills
+        difficulty: z.enum(["easy", "medium", "hard"]),
+        explanation: z.string(),
+      })
+    )
+    .min(12)
+    .max(18), // target: exactly 15 (5 easy / 5 medium / 5 hard)
+});
+
 // Dashboard metrics the AI must generate from a parsed resume (PLAN.md §7 Profile.dashboard).
 export const DashboardSchema = z.object({
   atsScore: z.number().min(0).max(100),

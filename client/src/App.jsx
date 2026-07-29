@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Companies from "./pages/Companies.jsx";
 import Practice from "./pages/Practice.jsx";
 import Settings from "./pages/Settings.jsx";
+import Profiling from "./pages/Profiling.jsx";
 import { useAppStore } from "./store/useAppStore.js";
 
 const navItems = [
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="/companies" element={<Companies />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/profiling" element={<Profiling />} />
         </Routes>
       </main>
     </div>

@@ -9,6 +9,7 @@ import { getProvider } from "./ai/provider.js";
 import { connectDb, isDbConnected } from "./db.js";
 import { resumeRouter } from "./routes/resume.js";
 import { analysisRouter } from "./routes/analysis.js";
+import { profilingRouter } from "./routes/profiling.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.get("/api/health", (req, res) => {
 // Feature routes
 app.use("/api/resume", resumeRouter);
 app.use("/api/analysis", analysisRouter);
+app.use("/api/profiling", profilingRouter);
 
 // AI smoke test: one tiny Groq call to verify the provider layer end-to-end.
 app.get("/api/ai/test", async (req, res, next) => {
