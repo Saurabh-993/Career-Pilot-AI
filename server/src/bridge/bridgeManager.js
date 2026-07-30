@@ -58,7 +58,8 @@ const CLIS = {
   gemini: {
     detect: ["gemini", ["--version"]],
     strategies: [
-      { name: "stdin", cmd: "gemini", args: [], stdin: true },
+      { name: "stdin", cmd: "gemini", args: ["--skip-trust"], stdin: true },
+      { name: "stdin-plain", cmd: "gemini", args: [], stdin: true },
       // note: gemini 0.51 prints help for "-p <text>" — stdin is its working path
     ],
   },
@@ -90,6 +91,10 @@ const stripControls = (s) => s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 const LOGIN_RE = /not logged in|please run \/login|login required|not authenticated|please sign in/i;
 // If the CLI printed its usage/help screen, our invocation was wrong — say so
 // plainly instead of the confusing "no JSON object found".
+// The CLI reached its vendor but the VENDOR refused (deprecated client, quota,
+// expired plan). Nothing our code can fix — say so instead of "invalid JSON".
+const VENDOR_BLOCK_RE =
+  /UNSUPPORTED_CLIENT|no longer supported|please migrate|quota exceeded|RESOURCE_EXHAUSTED|subscription (expired|required)|permission denied/i;
 const HELP_RE = /(^|\n)\s*(usage:|options:|commands:)|--help\s+Show help/i;
 
 /**
@@ -156,7 +161,11 @@ function spawnStrategy(strategy, prompt, timeoutMs) {
     log(`▶ ${strategy.cmd} [${strategy.name}] — ${prompt.length} char prompt`);
     let child;
     try {
-      child = spawn(strategy.cmd, strategy.args, { cwd: BRIDGE_DIR, shell: IS_WIN });
+      child = spawn(strategy.cmd, strategy.args, {
+        cwd: BRIDGE_DIR,
+        shell: IS_WIN,
+        env: { ...process.env, GEMINI_CLI_TRUST_WORKSPACE: "true" }, // gemini refuses "untrusted" dirs
+      });
     } catch (e) {
       log(`✖ spawn failed: ${e.message}`);
       return resolve({ output: "", error: e.message });
@@ -230,6 +239,12 @@ export async function runBridgeTask({ cli, instruction, schema, contextMd = "", 
       const { output, error } = await spawnStrategy(strategy, buildPrompt(validationError), timeoutMs);
       fs.writeFileSync(path.join(BRIDGE_DIR, "last-output.txt"), output.slice(-20000));
 
+      if (VENDOR_BLOCK_RE.test(output)) {
+        const reason = (output.match(/reasonMessage:\s*.(.{0,220})/) || [])[1] || "the provider rejected this CLI";
+        throw new Error(
+          `${cli} was refused by its provider: ${reason.replace(/.$/, "")}. This is a vendor/account limitation, not an app bug — update or switch CLI, or use the Groq / own-API-key tier.`
+        );
+      }
       if (LOGIN_RE.test(output))
         throw new Error(
           `${cli} CLI is not logged in. Open a terminal, run \`${cli}\`, complete its login flow, then test again.`

@@ -209,6 +209,12 @@ export default function Settings() {
             Sandbox: the agent can only read/write inside the <code>bridge/</code> folder. "Heavy Mode"
             (letting it edit real files, with diff approval) arrives with the desktop app.
           </p>
+          <p className="mt-2 text-[11px] text-soft">
+            <strong>Note:</strong> the CLI must be logged in (run it once in a terminal) and its plan must
+            still be supported by the vendor. Google deprecated Gemini CLI's free individual tier
+            (<code>UNSUPPORTED_CLIENT</code>) — Claude Code is the most reliable option today. If no CLI
+            works, nothing breaks: Groq or your own API key keeps handling everything.
+          </p>
         </div>
       )}
 
