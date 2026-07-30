@@ -126,8 +126,10 @@ export const QuizSchema = z.object({
     .max(18), // target: exactly 15 (5 easy / 5 medium / 5 hard)
 });
 
-// Practice question sets (same MCQ format as profiling — answers stay server-side).
-export const PracticeSetSchema = z.object({
+// One BATCH of practice questions (a full set = 3 batches: easy/medium/hard,
+// 10 each = 30 questions. One giant 30-question AI response breaks JSON too
+// often — batching is the reliable way to go long).
+export const PracticeBatchSchema = z.object({
   questions: z
     .array(
       z.object({
@@ -158,6 +160,8 @@ export const PrepPlanSchema = z.object({
               title: z.string(),
               kind: z.enum(["study", "practice", "mock", "revision", "apply"]),
               estMinutes: z.number(),
+              // Where exactly to prepare from (free, well-known sources).
+              resources: z.array(z.object({ title: z.string(), url: z.string().default("") })).default([]),
             })
           )
           .min(2)

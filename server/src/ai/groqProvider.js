@@ -1,26 +1,27 @@
-// GroqProvider — Tier 1 (free default).
-// Groq hosts open models (Llama 3.3 70B) behind an OpenAI-compatible HTTP API
-// and is extremely fast. We call it with plain fetch — no SDK needed.
+// OpenAICompatProvider — works with ANY OpenAI-compatible chat API
+// (Groq, OpenAI, Google's Gemini compat endpoint…). GroqProvider (Tier 1,
+// free default) is just a preconfigured instance of it; Tier 2 (user's own
+// key) builds one from Settings.
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
-
-export class GroqProvider {
-  constructor(apiKey) {
-    if (!apiKey) throw new Error("GROQ_API_KEY is missing — copy server/.env.example to server/.env and add your key");
+export class OpenAICompatProvider {
+  constructor({ baseUrl, model, apiKey, name = "ai" }) {
+    if (!apiKey) throw new Error(`${name}: API key is missing`);
+    this.baseUrl = baseUrl;
+    this.model = model;
     this.apiKey = apiKey;
+    this.name = name;
   }
 
   // Low-level call shared by complete() and json().
   async #chat(messages, { jsonMode = false, temperature = 0.7 } = {}) {
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(this.baseUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: this.model,
         messages,
         temperature,
         // jsonMode forces the model to output syntactically valid JSON only
@@ -30,8 +31,8 @@ export class GroqProvider {
 
     if (!res.ok) {
       const body = await res.text();
-      const err = new Error(`Groq API error ${res.status}: ${body.slice(0, 300)}`);
-      err.status = res.status === 429 ? 429 : 502; // 429 = rate-limited (free tier)
+      const err = new Error(`${this.name} API error ${res.status}: ${body.slice(0, 300)}`);
+      err.status = res.status === 429 ? 429 : 502; // 429 = rate-limited
       throw err;
     }
 
@@ -78,5 +79,19 @@ export class GroqProvider {
       }
     }
     throw new Error(`AI returned invalid structured output after retry: ${lastError}`);
+  }
+}
+
+// Tier 1 — free default: Groq's OpenAI-compatible endpoint + Llama 3.3 70B.
+export class GroqProvider extends OpenAICompatProvider {
+  constructor(apiKey) {
+    if (!apiKey)
+      throw new Error("GROQ_API_KEY is missing — copy server/.env.example to server/.env and add your key");
+    super({
+      baseUrl: "https://api.groq.com/openai/v1/chat/completions",
+      model: "llama-3.3-70b-versatile",
+      apiKey,
+      name: "groq",
+    });
   }
 }

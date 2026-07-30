@@ -1,9 +1,12 @@
-// Practice set generation — three modes, ADAPTIVE to the user's history:
-// recent weak topics get more questions, strong topics get harder ones.
+// Practice set generation — 30 REAL interview/exam-style questions per set,
+// built as three parallel tiered batches (10 easy + 10 medium + 10 hard):
+// one giant 30-question response breaks JSON too often, and tiering
+// guarantees the easy→hard progression instead of hoping the model balances.
+// Still ADAPTIVE: recent weak topics get more questions, strong get harder.
 import { Resume } from "../models/Resume.js";
 import { PracticeSet } from "../models/PracticeSet.js";
 import { getProvider } from "../ai/provider.js";
-import { PracticeSetSchema } from "shared";
+import { PracticeBatchSchema } from "shared";
 import { candidateLevel } from "./matchJobs.js";
 
 /** Aggregate accuracy per topic from the user's recent finished sets. */
@@ -23,10 +26,22 @@ async function recentPerformance(resumeId) {
 }
 
 const MODE_BRIEF = {
-  standard: `a STANDARD tech-company screening: mix aptitude/logical reasoning (2-3), DSA & complexity (3-4), CS fundamentals — OS/DBMS/networks (2-3), and situational HR judgment (1-2, "what is the best response" style)`,
-  company: (company) => `the actual interview pattern of ${company}: their known rounds, favorite topics, and question style. Reflect what ${company} genuinely emphasizes (e.g. their tech stack, values-based HR questions)`,
-  resume: `the candidate's OWN resume: their claimed skills, projects and experience — the questions an interviewer would ask after reading it (include code-output questions in their languages)`,
+  standard: `a STANDARD tech-company screening: aptitude/logical reasoning, DSA & complexity, CS fundamentals (OS/DBMS/networks), and situational HR judgment ("what is the best response" style). Model them on REAL screening tests (TCS NQT, Infosys, Wipro, Amazon/Google online assessments, GATE-style CS questions)`,
+  company: (company) => `the ACTUAL interview pattern of ${company}: their known rounds, favorite topics, question style and real past questions candidates report from ${company} interviews and online assessments`,
+  resume: `the candidate's OWN resume: their claimed skills, projects and experience — the REAL questions interviewers ask after reading it (include code-output questions in their languages)`,
 };
+
+function batchPrompt({ brief, difficulty, level, perf, parsed, mode }) {
+  return `You are a technical interviewer. Create practice MCQs focused on ${brief}.
+
+Return JSON {"questions":[...]} with EXACTLY 10 questions, ALL difficulty "${difficulty}", each:
+{"q" (code snippets in \`\`\` fences where relevant), "options" (exactly 4, believable distractors), "answerIdx" (0-3, verify by mentally executing), "topic", "difficulty":"${difficulty}", "explanation" (1-3 teaching sentences)}
+
+These must feel like REAL questions from actual interviews and exams — practical, specific, the kind that appears in real screenings — never made-up trivia.
+Candidate level: ${level} — "${difficulty}" is relative to that level.
+${Object.keys(perf).length ? `ADAPTIVE — recent per-topic accuracy: ${JSON.stringify(perf)}. Weight MORE questions toward topics below 60%; for topics above 80%, probe deeper edge cases.` : ""}
+CANDIDATE PROFILE: skills=${JSON.stringify(parsed.skills)}${mode === "resume" ? `; projects=${JSON.stringify(parsed.projects)}; experience=${JSON.stringify(parsed.experience)}` : ""}`;
+}
 
 export async function generatePractice(resumeId, mode, company = "") {
   const resume = await Resume.findById(resumeId);
@@ -36,15 +51,21 @@ export async function generatePractice(resumeId, mode, company = "") {
   const level = candidateLevel(resume.parsed);
   const brief = mode === "company" ? MODE_BRIEF.company(company) : MODE_BRIEF[mode];
 
-  const prompt = `You are a technical interviewer. Create a practice MCQ set focused on ${brief}.
+  // Three tiered batches in parallel → merged easy → medium → hard.
+  const provider = getProvider();
+  const batches = await Promise.all(
+    ["easy", "medium", "hard"].map((difficulty) =>
+      provider.json(
+        batchPrompt({ brief, difficulty, level, perf, parsed: resume.parsed, mode }),
+        PracticeBatchSchema,
+        { temperature: 0.85 }
+      )
+    )
+  );
+  const questions = batches.flatMap((b, i) =>
+    // Force the tier label — models occasionally drift.
+    b.questions.map((q) => ({ ...q, difficulty: ["easy", "medium", "hard"][i] }))
+  );
 
-Return JSON {"questions":[...]} with EXACTLY 10 questions, each:
-{"q" (code snippets in \`\`\` fences where relevant), "options" (exactly 4, believable distractors), "answerIdx" (0-3, verify by mentally executing), "topic", "difficulty" ("easy"|"medium"|"hard"), "explanation" (1-3 teaching sentences)}
-
-Candidate level: ${level}. Calibrate difficulty accordingly (mix ~3 easy / 4 medium / 3 hard).
-${Object.keys(perf).length ? `ADAPTIVE RULES — recent per-topic accuracy: ${JSON.stringify(perf)}. Give MORE questions on topics below 60% accuracy; make topics above 80% HARDER.` : ""}
-CANDIDATE PROFILE: skills=${JSON.stringify(resume.parsed.skills)}${mode === "resume" ? `; projects=${JSON.stringify(resume.parsed.projects)}; experience=${JSON.stringify(resume.parsed.experience)}` : ""}`;
-
-  const { questions } = await getProvider().json(prompt, PracticeSetSchema, { temperature: 0.8 });
   return PracticeSet.create({ resumeId, mode, company, questions });
 }

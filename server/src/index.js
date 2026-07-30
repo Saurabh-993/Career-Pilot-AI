@@ -12,6 +12,8 @@ import { analysisRouter } from "./routes/analysis.js";
 import { profilingRouter } from "./routes/profiling.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { practiceRouter } from "./routes/practice.js";
+import { aiRouter } from "./routes/ai.js";
+import { refreshSettings } from "./ai/provider.js";
 
 const app = express();
 
@@ -43,6 +45,7 @@ app.use("/api/analysis", analysisRouter);
 app.use("/api/profiling", profilingRouter);
 app.use("/api/jobs", jobsRouter);
 app.use("/api/practice", practiceRouter);
+app.use("/api/ai", aiRouter);
 
 // AI smoke test: one tiny Groq call to verify the provider layer end-to-end.
 app.get("/api/ai/test", async (req, res, next) => {
@@ -68,7 +71,9 @@ const port = process.env.PORT || 3001;
 // Fail-soft boot (robustness rule): if MongoDB is down, the API still starts —
 // /api/health reports mongoConnected:false so the UI can tell the user,
 // instead of the whole backend refusing to boot.
-connectDb().catch((err) => {
+connectDb()
+  .then(() => refreshSettings()) // load AI tier settings once DB is up
+  .catch((err) => {
   console.error(`⚠️  MongoDB not connected: ${err.message}`);
   console.error("   → run `npm run db:up` at the repo root (Docker Desktop must be running)");
 });

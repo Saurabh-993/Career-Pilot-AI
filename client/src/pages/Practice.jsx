@@ -154,7 +154,7 @@ export default function Practice() {
               )}
               <button onClick={() => startSet(mode)} disabled={mode === "company" && !company.trim()}
                       className="mt-auto rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
-                Start 10 questions →
+                Start 30 questions →
               </button>
             </div>
           ))}
@@ -299,6 +299,21 @@ export default function Practice() {
                                     <span className={`ml-2 text-[10px] font-semibold uppercase ${KIND_COLOR[t.kind] ?? "text-soft"}`}>
                                       {t.kind} · {t.estMinutes}m
                                     </span>
+                                    {t.resources?.length > 0 && (
+                                      <span className="mt-0.5 block">
+                                        {t.resources.map((r, ri) =>
+                                          r.url ? (
+                                            <a key={ri} href={r.url} target="_blank" rel="noreferrer"
+                                               onClick={(e) => e.stopPropagation()}
+                                               className="mr-3 text-[11px] font-medium text-accent no-underline hover:underline">
+                                              ↗ {r.title}
+                                            </a>
+                                          ) : (
+                                            <span key={ri} className="mr-3 text-[11px] text-soft">• {r.title}</span>
+                                          )
+                                        )}
+                                      </span>
+                                    )}
                                   </span>
                                 </label>
                               );

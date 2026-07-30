@@ -22,6 +22,8 @@ PROJECT_GUIDE.md
 
 # ---------- AI bridge runtime (regenerated per task, may contain resume data) ----------
 bridge/context.md
+bridge/prompt.md
+bridge/last-output.txt
 bridge/inbox/
 bridge/outbox/
 

@@ -17,10 +17,11 @@ export async function generatePrepPlan(resumeId, company, interviewDate) {
 
   const prompt = `You are an interview coach. The candidate has an interview at "${company}" in EXACTLY ${daysLeft} day(s). Build a realistic day-by-day preparation plan.
 
-Return JSON {"company","strategy" (2 sentences),"days":[{"day" (1=today, up to ${daysLeft}),"focus","tasks":[{"title" (specific and actionable, mention exact topics/question types),"kind":"study"|"practice"|"mock"|"revision","estMinutes"}]}]}
+Return JSON {"company","strategy" (2 sentences),"days":[{"day" (1=today, up to ${daysLeft}),"focus","tasks":[{"title" (specific and actionable, mention exact topics/question types),"kind":"study"|"practice"|"mock"|"revision","estMinutes","resources":[{"title","url"}]}]}]}
 
 Rules:
 - EXACTLY ${daysLeft} day entries. 2-4 hours of tasks per day (realistic for someone also living life).
+- Every "study" and "practice" task MUST include 1-2 "resources" — FREE, well-known, real sources to prepare from (official docs, freeCodeCamp, GeeksforGeeks, LeetCode problem sets, InterviewBit, striver's sheet, specific YouTube playlists). Use real URLs you are confident exist; "" if unsure.
 - Structure: fundamentals & gaps early → company-specific patterns middle → mocks + revision at the end. Final day = light revision + logistics, never cramming.
 - Target ${company}'s actual interview style and rounds. Prioritize the candidate's weak areas.
 - Candidate level: ${candidateLevel(resume.parsed)}${profile?.verifiedLevel ? ` (verified: ${profile.verifiedLevel.level})` : ""}.
