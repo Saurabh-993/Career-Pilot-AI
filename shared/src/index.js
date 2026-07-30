@@ -126,6 +126,48 @@ export const QuizSchema = z.object({
     .max(18), // target: exactly 15 (5 easy / 5 medium / 5 hard)
 });
 
+// Practice question sets (same MCQ format as profiling — answers stay server-side).
+export const PracticeSetSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        q: z.string(),
+        options: z.array(z.string()).length(4),
+        answerIdx: z.number().int().min(0).max(3),
+        topic: z.string(),
+        difficulty: z.enum(["easy", "medium", "hard"]),
+        explanation: z.string(),
+      })
+    )
+    .min(8)
+    .max(12),
+});
+
+// Day-wise interview prep plan ("interview in N days").
+export const PrepPlanSchema = z.object({
+  company: z.string(),
+  strategy: z.string().default(""), // 2-sentence overall approach
+  days: z
+    .array(
+      z.object({
+        day: z.number().int(), // 1 = today
+        focus: z.string(),
+        tasks: z
+          .array(
+            z.object({
+              title: z.string(),
+              kind: z.enum(["study", "practice", "mock", "revision", "apply"]),
+              estMinutes: z.number(),
+            })
+          )
+          .min(2)
+          .max(6),
+      })
+    )
+    .min(1)
+    .max(30),
+});
+
 // Dashboard metrics the AI must generate from a parsed resume (PLAN.md §7 Profile.dashboard).
 export const DashboardSchema = z.object({
   atsScore: z.number().min(0).max(100),
